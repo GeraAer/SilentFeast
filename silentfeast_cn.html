@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>暗宴 / Silent Feast — beta ver.  by Guo Ruizhi</title>
+    <style>
+        :root {
+            --bg: #0e1016;
+            --fg: #e7ecf5;
+            --panel: #171b24;
+            --panel2: #0f1420;
+            --border: #2a3450;
+            --acc: #7aa2ff;
+            --good: #35d49a;
+            --warn: #f6c343;
+            --bad: #ff6b6b;
+            --muted: #9aa4b2;
+            --chip: #0f1322;
+            --chip-b: #2d385c
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 16px;
+            font-family: system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+            background: var(--bg);
+            color: var(--fg)
+        }
+
+        h1 {
+            margin: 6px 0 10px
+        }
+
+        .panel {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: linear-gradient(180deg,var(--panel),var(--panel2));
+            padding: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.25)
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .villagers {
+            display: grid;
+            grid-template-columns: repeat(6,1fr);
+            gap: 10px
+        }
+
+        .slot {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            min-height: 160px;
+            background: #101527;
+            position: relative;
+            overflow: hidden
+        }
+
+        .title {
+            font-weight: 800;
+            margin-bottom: 6px
+        }
+
+        .tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 6px
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 999px;
+            border: 1px solid var(--chip-b);
+            background: var(--chip)
+        }
+
+        .retired {
+            border-color: #a66;
+            background: #3a2424
+        }
+
+        .garlic {
+            border-color: #7a4;
+            background: #33422a
+        }
+
+        .devline {
+            color: #c7ccff;
+            font-size: 12px;
+            margin-top: 4px
+        }
+
+        .kpi {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px
+        }
+
+        .stat {
+            display: grid;
+            gap: 6px
+        }
+
+        .bar {
+            height: 10px;
+            border-radius: 999px;
+            background: #0b0f1b;
+            border: 1px solid var(--border);
+            overflow: hidden
+        }
+
+            .bar > span {
+                display: block;
+                height: 100%;
+                background: linear-gradient(90deg,var(--acc),#9ac5ff)
+            }
+
+            .bar.bad > span {
+                background: linear-gradient(90deg,var(--bad),#ff9b9b)
+            }
+
+        .handchips {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .chip {
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--chip-b);
+            background: var(--chip);
+            font-size: 12px
+        }
+
+        .controls label {
+            margin-right: 8px
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #0d1220;
+            color: var(--fg);
+            cursor: pointer
+        }
+
+            .btn:disabled {
+                opacity: .5;
+                cursor: not-allowed
+            }
+
+        select, input[type=number] {
+            background: #0d1220;
+            color: var(--fg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 8px
+        }
+
+        .log {
+            font-family: ui-monospace,Menlo,Consolas,monospace;
+            max-height: 340px;
+            overflow: auto;
+            background: #0a0d13;
+            color: #e9ecf1;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border)
+        }
+
+            .log .info {
+                color: #c8d1e4
+            }
+
+            .log .good {
+                color: var(--good)
+            }
+
+            .log .warn {
+                color: var(--warn)
+            }
+
+            .log .bad {
+                color: var(--bad)
+            }
+
+            .log .dev {
+                color: #93b7ff
+            }
+
+        details.rulebook {
+            margin: 12px 0
+        }
+
+            details.rulebook summary {
+                cursor: pointer;
+                font-weight: 800
+            }
+
+        .muted {
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .grid2 {
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: 6px
+        }
+
+        .grid3 {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 6px
+        }
+
+        .grid4 {
+            display: grid;
+            grid-template-columns: repeat(4,1fr);
+            gap: 6px
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,.55);
+            z-index: 1000
+        }
+
+            .modal .box {
+                width: min(560px,92vw);
+                background: linear-gradient(180deg,var(--panel),var(--panel2));
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 14px;
+                box-shadow: 0 10px 30px rgba(0,0,0,.35)
+            }
+
+        .deck {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+            .deck .tag {
+                background: #0f1530;
+                border-color: #2b3a6a
+            }
+
+        .sectionTitle {
+            margin-top: 6px;
+            font-weight: 800
+        }
+    </style>
+</head>
+<body>
+    <h1>暗宴 / Silent Feast — beta ver by Guo Ruizhi aka Gera Aer）</h1>
+
+    <details class="rulebook" open>
+        <summary>📖 规则书 · 极简</summary>
+        <p><b>目标</b>：先到 <b>50 BP</b> 胜；任一方 <b>Tox ≥ 15</b> 爆。</p>
+        <ul>
+            <li><b>明牌卡栈</b>：每个村民位公开展示其栈（N/G/C/A）。</li>
+            <li><b>喝血</b>：自饮抽 <b>2</b> 张（加入该位栈后判定）。含 G → 判 G（饮者 <b>+1×阶</b> Tox，位退场）；否则若 C−A≥2 → 判 V（饮者 <b>+1×阶</b> Tox）；否则判 H（饮者 <b>+1×阶</b> BP）。</li>
+            <li><b>连吸</b>：只有在<b>你自己回合，且你指定你自己喝</b>时，若判 H 才能连吸：第一口阶=1，第二口阶=2… 你可随时点击“结束回合”放弃继续连吸。若任一口判 V/G，立刻结束回合并按当口阶结算 Tox。</li>
+            <li><b>指定对手饮用</b>：你的回合<b>立刻结束</b>；被指定者可改成本口抽 <b>1 / 2 / 3</b> 张，但<b>不触发连吸</b>。本口的<b>阶=你当前连吸+1</b>。</li>
+            <li><b>窥视</b>（道具）：仅你可见<b>牌库顶</b>（“这口抽牌前一张”）。</li>
+            <li><b>杀戮</b>（道具）：未退场位 → 你 +2BP 并刷新；退场位 → 掠夺其栈上全部操作牌入手并刷新。</li>
+            <li><b>血掠</b>（道具·整局一次）：对手 -4BP；你 +1Tox。</li>
+            <li><b>牺牲回合补给</b>：在<b>本回合尚未喝血</b>之前，可放弃整个回合从市场拿 <b>操作×2</b> 或 <b>道具×2</b>（不受回合数限制）。</li>
+            <li><b>牌库</b>：真实洗牌的实体操作牌库（可在设置里调整 N/C/A/G 的牌数；默认 G 更少）。</li>
+        </ul>
+    </details>
+
+    <div class="row">
+        <div class="panel" style="flex:1">
+            <div class="kpi">
+                <div class="panel stat">
+                    <div><b>你</b></div>
+                    <div>BP <span id="pBP">0</span>/<span id="bpGoal">50</span></div>
+                    <div class="bar"><span id="pBPbar" style="width:0%"></span></div>
+                    <div>Tox <span id="pTox">0</span>/<span id="toxCap">15</span></div>
+                    <div class="bar bad"><span id="pToxbar" style="width:0%"></span></div>
+                    <div>本回合连吸阶：<b id="pChain">0</b></div>
+                    <div class="sectionTitle">我的卡库</div>
+                    <div class="handchips" id="pHand"></div>
+                </div>
+                <div class="panel stat">
+                    <div><b>AI</b></div>
+                    <div>BP <span id="aBP">0</span>/<span id="bpGoal2">50</span></div>
+                    <div class="bar"><span id="aBPbar" style="width:0%"></span></div>
+                    <div>Tox <span id="aTox">0</span>/<span id="toxCap2">15</span></div>
+                    <div class="bar bad"><span id="aToxbar" style="width:0%"></span></div>
+                    <div>本回合连吸阶：<b id="aChain">0</b></div>
+                    <div class="sectionTitle">AI 卡库</div>
+                    <div class="handchips" id="aHand"></div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top:10px">
+                <div class="deck">
+                    <b>操作牌牌库</b>
+                    <span class="tag">余量 <b id="deckCnt">0</b></span>
+                    <span class="tag">N <b id="cntN">0</b></span>
+                    <span class="tag">C <b id="cntC">0</b></span>
+                    <span class="tag">A <b id="cntA">0</b></span>
+                    <span class="tag garlic">G <b id="cntG">0</b></span>
+                    <span class="muted" id="peekInfo">（未窥视）</span>
+                </div>
+            </div>
+
+            <div style="margin-top:10px"><b>村民（默认 6 位，明牌卡栈）</b></div>
+            <div id="villagers" class="villagers"></div>
+        </div>
+
+        <div class="panel" style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <b>设置 / Settings</b>
+                <div class="grid3">
+                    <label><input type="checkbox" id="devToggle" /> 开发者模式</label>
+                    <label>
+                        AI 难度
+                        <select id="aiDiff">
+                            <option value="simple">简单</option>
+                            <option value="hard">困难（聪明）</option>
+                        </select>
+                    </label>
+                    <button id="restart" class="btn">新开一局</button>
+                </div>
+            </div>
+            <div class="panel grid2" style="margin-top:6px">
+                <div>
+                    <b>目标 / 阈值</b>
+                    <div class="grid4" style="margin-top:6px">
+                        <label>BP 目标 <input id="bpGoalInput" type="number" min="1" value="50" style="width:80px" /></label>
+                        <label>Tox 上限 <input id="toxCapInput" type="number" min="1" value="15" style="width:80px" /></label>
+                    </div>
+                </div>
+                <div>
+                    <b>牌库组成（牌数）</b>
+                    <div class="grid4" style="margin-top:6px">
+                        <label>N <input id="deckN" type="number" min="0" value="40" style="width:70px" /></label>
+                        <label>C <input id="deckC" type="number" min="0" value="36" style="width:70px" /></label>
+                        <label>A <input id="deckA" type="number" min="0" value="34" style="width:70px" /></label>
+                        <label>G <input id="deckG" type="number" min="0" value="10" style="width:70px" /></label>
+                    </div>
+                </div>
+            </div>
+            <div class="grid3" style="margin-top:8px">
+                <button id="applySettings" class="btn">应用并保存</button>
+                <button id="resetSettings" class="btn">恢复默认</button>
+                <button id="endTurn" class="btn">结束本回合（放弃连吸）</button>
+            </div>
+            <hr />
+            <div><b>你的回合 · 道具阶段（0–1 张）</b></div>
+            <div class="controls" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center">
+                <label>
+                    道具：
+                    <select id="toolSelect"><option value="">（不使用）</option></select>
+                </label>
+                <label>
+                    目标位：
+                    <select id="toolTarget"></select>
+                </label>
+                <button id="playTool" class="btn">使用道具 / 血掠</button>
+                <div class="muted" style="grid-column:1/-1">窥视=看牌库顶（仅你可见）；杀戮=+2BP 或掠夺退场位；血掠=一次，对手-4BP你+1Tox。每回合最多 1 张道具。</div>
+            </div>
+            <hr />
+            <div><b>你的回合 · 主行动</b></div>
+            <div class="controls" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center">
+                <label>
+                    目标位（不可选退场）：
+                    <select id="mainTarget"></select>
+                </label>
+                <label>
+                    饮用者：
+                    <select id="drinker"><option value="player">我喝（抽2）</option><option value="ai">推给 AI（我回合立刻结束；AI 可选 1/2/3）</option></select>
+                </label>
+                <button id="doDrink" class="btn">执行饮用 / 指定饮用</button>
+                <div class="muted" style="grid-column:1/-1">自饮判 H 可连吸；被指定者不连吸；V/G 的 Tox = <b>1×当口阶</b>。</div>
+            </div>
+            <div class="controls" style="display:grid;grid-template-columns:auto auto auto;gap:8px;align-items:center;margin-top:6px">
+                <div class="muted">（仅当本回合尚未喝血时可用）</div>
+                <button id="supplyOp" class="btn">牺牲回合：操作 ×2</button>
+                <button id="supplyTool" class="btn">牺牲回合：道具 ×2</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <b>对局日志（公开信息；DEV 开启会追加AI细节）</b>
+        <div id="log" class="log"></div>
+    </div>
+
+    <!-- 被指定为饮用者时：选择抽 1/2/3 -->
+    <div id="chooseDrawModal" class="modal" aria-hidden="true">
+        <div class="box">
+            <h3 style="margin-top:0">你被指定饮用：选择抽牌张数</h3>
+            <div class="muted">标准为抽 2；被指定者可改为抽 <b>1 / 2 / 3</b>。本口阶由指定者决定。</div>
+            <div style="margin-top:8px">
+                <label>
+                    抽牌张数：
+                    <select id="chooseDrawSel">
+                        <option value="1">1 张（更稳）</option>
+                        <option value="2" selected>2 张（标准）</option>
+                        <option value="3">3 张（更赌）</option>
+                    </select>
+                </label>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+                <button id="chooseDrawOK" class="btn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ===== SFX ===== */
+        let AC = null, sfxEnabled = true;
+        function ensureAC() { if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)() } }
+        function beep(freq = 440, dur = 0.12, type = 'sine', gain = 0.08) {
+            if (!sfxEnabled) return; ensureAC(); const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+            o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur)
+        }
+        const SFX = { draw: () => beep(660, 0.08, 'triangle', 0.05), good: () => { beep(520, 0.09, 'sine', 0.07); setTimeout(() => beep(740, 0.09, 'sine', 0.05), 90) }, bad: () => { beep(180, 0.15, 'square', 0.06); setTimeout(() => beep(140, 0.15, 'square', 0.05), 120) }, garlic: () => { beep(300, 0.07, 'sawtooth', 0.06); setTimeout(() => beep(90, 0.2, 'square', 0.05), 60) }, slay: () => { beep(400, 0.05, 'square', 0.06); setTimeout(() => beep(250, 0.08, 'square', 0.05), 60) }, click: () => beep(500, 0.04, 'triangle', 0.04), pick: () => beep(720, 0.07, 'sine', 0.05) };
+
+        /* ===== Utils & Log ===== */
+        const el = id => document.getElementById(id);
+        const logEl = el('log');
+        function log(t, lv = 'info', devOnly = false) { if (devOnly && !state.settings.dev) return; const d = document.createElement('div'); d.className = (devOnly ? 'dev ' : '') + lv; d.innerHTML = t; logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight }
+        function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0;[a[i], a[j]] = [a[j], a[i]] } return a }
+
+        /* ===== Settings (persist) ===== */
+        const STORE_KEY = 'sf_newrules_chainfix_v2';
+        function defaults() {
+            return {
+                dev: false, aiDifficulty: 'simple',
+                bpGoal: 50, toxCap: 15,
+                deckCounts: { N: 40, C: 36, A: 34, G: 10 },
+            }
+        }
+        function load() { try { const raw = localStorage.getItem(STORE_KEY); if (!raw) return defaults(); const s = JSON.parse(raw); return { ...defaults(), ...s, deckCounts: { ...defaults().deckCounts, ...(s.deckCounts || {}) } } } catch (e) { return defaults() } }
+        function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state.settings)) }
+
+        /* ===== Core State ===== */
+        const state = {
+            settings: load(),
+            deck: [], counts: { N: 0, C: 0, A: 0, G: 0 }, peek: null,
+            player: { bp: 0, tox: 0, hand: [], tools: [], chain: 0, leechUsed: false, turns: 0 },
+            ai: { bp: 0, tox: 0, hand: [], tools: [], chain: 0, leechUsed: false, turns: 0 },
+            slots: Array.from({ length: 6 }, () => ({ stack: [], retired: false, publicRevealed: [] })),
+            turn: 'player', usedToolThisTurn: false, ended: false,
+            performedDrinkThisTurn: false
+        };
+
+        /* ===== Deck ===== */
+        function buildDeck() {
+            const c = state.settings.deckCounts; const arr = [];
+            ['N', 'C', 'A', 'G'].forEach(k => { for (let i = 0; i < c[k]; i++)arr.push(k) });
+            shuffle(arr); state.deck = arr; recount(); state.peek = null; updateDeckUI();
+        }
+        function drawOne() { if (state.deck.length === 0) buildDeck(); const x = state.deck.pop(); state.counts[x]--; updateDeckUI(); return x }
+        function drawMany(n) { const out = []; for (let i = 0; i < n; i++) out.push(drawOne()); return out }
+        function recount() { state.counts = { N: 0, C: 0, A: 0, G: 0 }; state.deck.forEach(x => state.counts[x]++) }
+        function peekTop() { if (state.deck.length === 0) return null; return state.deck[state.deck.length - 1] }
+
+        /* ===== Compute blood on a slot ===== */
+        function computeType(slot) {
+            if (slot.stack.includes('G')) return 'G';
+            const c = slot.stack.filter(x => x === 'C').length;
+            const a = slot.stack.filter(x => x === 'A').length;
+            return (c - a >= 2) ? 'V' : 'H';
+        }
+
+        /* ===== UI helpers ===== */
+        function chipList(owner) {
+            const h = owner.hand, t = owner.tools, cnt = x => h.filter(c => c === x).length, tcnt = y => t.filter(c => c === y).length;
+            return [
+                `<span class="chip">操作 N×${cnt('N')}</span>`,
+                `<span class="chip">操作 C×${cnt('C')}</span>`,
+                `<span class="chip">操作 A×${cnt('A')}</span>`,
+                `<span class="chip">操作 G×${cnt('G')}</span>`,
+                `<span class="chip">窥×${tcnt('Spy')}</span>`,
+                `<span class="chip">杀×${tcnt('Slay')}</span>`,
+                `<span class="chip">解×${tcnt('Detox')}</span>`,
+                `<span class="chip">掠×${owner.leechUsed ? 0 : 1}</span>`
+            ].join(' ')
+        }
+        function fillTargets(sel, aliveOnly = true) {
+            sel.innerHTML = ''; state.slots.forEach((s, i) => { if (!aliveOnly || !s.retired) { sel.appendChild(new Option(`#${i + 1}`, String(i))) } });
+        }
+        function updateDeckUI() {
+            el('deckCnt').textContent = state.deck.length;
+            el('cntN').textContent = state.counts.N; el('cntC').textContent = state.counts.C; el('cntA').textContent = state.counts.A; el('cntG').textContent = state.counts.G;
+            el('peekInfo').textContent = state.peek ? `（你窥视到顶牌：${state.peek}）` : '（未窥视）'
+        }
+        function render() {
+            el('pBP').textContent = state.player.bp; el('aBP').textContent = state.ai.bp;
+            el('pTox').textContent = state.player.tox; el('aTox').textContent = state.ai.tox;
+            el('bpGoal').textContent = state.settings.bpGoal; el('bpGoal2').textContent = state.settings.bpGoal;
+            el('toxCap').textContent = state.settings.toxCap; el('toxCap2').textContent = state.settings.toxCap;
+            el('pBPbar').style.width = Math.min(100, Math.round(100 * state.player.bp / state.settings.bpGoal)) + '%';
+            el('aBPbar').style.width = Math.min(100, Math.round(100 * state.ai.bp / state.settings.bpGoal)) + '%';
+            el('pToxbar').style.width = Math.min(100, Math.round(100 * state.player.tox / state.settings.toxCap)) + '%';
+            el('aToxbar').style.width = Math.min(100, Math.round(100 * state.ai.tox / state.settings.toxCap)) + '%';
+            el('pChain').textContent = state.player.chain; el('aChain').textContent = state.ai.chain;
+
+            el('pHand').innerHTML = chipList(state.player);
+            el('aHand').innerHTML = state.settings.dev ? chipList(state.ai) : '<span class="muted">（隐藏）</span>';
+
+            const wrap = el('villagers'); wrap.innerHTML = '';
+            state.slots.forEach((s, i) => {
+                const d = document.createElement('div'); d.className = 'slot';
+                const t = document.createElement('div'); t.className = 'title'; t.textContent = `#${i + 1}`; d.appendChild(t);
+                const tags = document.createElement('div'); tags.className = 'tags';
+                const ct = document.createElement('span'); ct.className = 'tag'; ct.textContent = `栈深:${s.stack.length}`; tags.appendChild(ct);
+                if (s.retired) { const r = document.createElement('span'); r.className = 'tag retired'; r.textContent = '退场'; tags.appendChild(r) }
+                if (s.stack.includes('G')) { const g = document.createElement('span'); g.className = 'tag garlic'; g.textContent = '含G'; tags.appendChild(g) }
+                d.appendChild(tags);
+
+                const list = document.createElement('div'); list.className = 'muted'; list.textContent = `栈：[${s.stack.join(', ') || '空'}]`;
+                d.appendChild(list);
+                const type = computeType(s); const line = document.createElement('div'); line.className = 'muted'; line.textContent = `当前判定：${type}`;
+                d.appendChild(line);
+                if (state.settings.dev && !s.retired) {
+                    const dev = document.createElement('div'); dev.className = 'devline'; dev.textContent = `DEV: type=${type} stack=[${s.stack.join(', ')}]`;
+                    d.appendChild(dev)
+                }
+                wrap.appendChild(d)
+            });
+
+            fillTargets(el('toolTarget'), false);
+            fillTargets(el('mainTarget'), true);
+
+            // tool list
+            const tl = el('toolSelect'); tl.innerHTML = ''; tl.appendChild(new Option('（不使用）', ''));
+            if (!state.player.leechUsed) tl.appendChild(new Option('血掠（对手-4BP，我+1Tox）', 'Leech'));
+            if (state.player.tools.includes('Spy')) tl.appendChild(new Option('窥视（看牌库顶）', 'Spy'));
+            if (state.player.tools.includes('Slay')) tl.appendChild(new Option('杀戮', 'Slay'));
+            if (state.player.tools.includes('Detox')) tl.appendChild(new Option('解毒', 'Detox'));
+
+            // buttons availability
+            el('supplyOp').disabled = state.turn !== 'player' || state.performedDrinkThisTurn || state.ended;
+            el('supplyTool').disabled = state.turn !== 'player' || state.performedDrinkThisTurn || state.ended;
+            el('endTurn').disabled = state.turn !== 'player' || state.ended;
+
+            el('devToggle').checked = state.settings.dev;
+            el('aiDiff').value = state.settings.aiDifficulty;
+            el('bpGoalInput').value = state.settings.bpGoal; el('toxCapInput').value = state.settings.toxCap;
+            el('deckN').value = state.settings.deckCounts.N; el('deckC').value = state.settings.deckCounts.C; el('deckA').value = state.settings.deckCounts.A; el('deckG').value = state.settings.deckCounts.G;
+
+            updateDeckUI();
+        }
+
+        /* ===== Start / Reset ===== */
+        function resetBoard(villagerCount = 6) {
+            state.player = { bp: 0, tox: 0, hand: [], tools: [], chain: 0, leechUsed: false, turns: 0 };
+            state.ai = { bp: 0, tox: 0, hand: [], tools: [], chain: 0, leechUsed: false, turns: 0 };
+            state.slots = Array.from({ length: villagerCount }, () => ({ stack: [], retired: false, publicRevealed: [] }));
+            state.turn = 'player'; state.usedToolThisTurn = false; state.ended = false; state.peek = null; state.performedDrinkThisTurn = false;
+            buildDeck(); log(`<b>对局开始</b>：目标 ${state.settings.bpGoal} BP；Tox 上限 ${state.settings.toxCap}；抽牌喝血，明牌卡栈。`, 'info');
+            render();
+        }
+        function checkEnd() {
+            if (state.player.tox >= state.settings.toxCap) { log(`<b>你中毒爆掉</b>（Tox ≥ ${state.settings.toxCap}）`, 'bad'); state.ended = true }
+            if (state.ai.tox >= state.settings.toxCap) { log(`<b>AI 中毒爆掉</b>（Tox ≥ ${state.settings.toxCap}）`, 'good'); state.ended = true }
+            if (state.player.bp >= state.settings.bpGoal) { log(`<b>你达成 ${state.settings.bpGoal} BP</b>`, 'good'); state.ended = true }
+            if (state.ai.bp >= state.settings.bpGoal) { log(`<b>AI 达成 ${state.settings.bpGoal} BP</b>`, 'bad'); state.ended = true }
+            render(); return state.ended
+        }
+
+        /* ===== Tools ===== */
+        function useTool() {
+            if (state.ended || state.turn !== 'player') return;
+            if (state.usedToolThisTurn) { log('本回合已用过道具。', 'bad'); return }
+            const sel = el('toolSelect').value; const idx = parseInt(el('toolTarget').value || '0', 10);
+            if (!sel) { log('（你本回合未使用道具）', 'info'); return }
+
+            if (sel === 'Leech') {
+                if (state.player.leechUsed) { log('你已用过一次血掠。', 'bad'); return }
+                state.player.leechUsed = true; state.ai.bp = Math.max(0, state.ai.bp - 4); state.player.tox += 1;
+                log(`<b>你发动血掠</b> → AI -4BP；你 +1Tox`, 'warn'); state.usedToolThisTurn = true; render(); SFX.bad(); if (!checkEnd()) { }
+                return
+            }
+            if (sel === 'Spy') {
+                const i = state.player.tools.indexOf('Spy'); if (i < 0) { render(); return }
+                state.player.tools.splice(i, 1);
+                state.peek = peekTop();
+                log(`你使用<b>窥视</b> → 你看到牌库顶为：<b>${state.peek ?? '（空）'}</b>（仅你可见）`, 'info');
+                state.usedToolThisTurn = true; render(); SFX.click(); return
+            }
+            if (sel === 'Slay') {
+                const i = state.player.tools.indexOf('Slay'); if (i < 0) { render(); return }
+                state.player.tools.splice(i, 1);
+                const s = state.slots[idx];
+                if (s.retired) {
+                    const loot = [...s.stack]; state.player.hand.push(...loot);
+                    log(`你对<b>退场</b>位 #${idx + 1} 使用杀戮 → 掠夺其栈 [${loot.join(', ') || '无'}] 入手；补新村民。`, 'warn'); SFX.slay();
+                    state.slots[idx] = { stack: [], retired: false, publicRevealed: [] };
+                } else {
+                    state.player.bp += 2; log(`你对<b>未退场</b>位 #${idx + 1} 使用杀戮 → 你 +2BP；该位刷新。`, 'warn'); SFX.slay();
+                    state.slots[idx] = { stack: [], retired: false, publicRevealed: [] };
+                }
+                state.usedToolThisTurn = true; render(); if (!checkEnd()) { }
+                return
+            }
+            if (sel === 'Detox') {
+                const i = state.player.tools.indexOf('Detox'); if (i < 0) { render(); return }
+                state.player.tools.splice(i, 1);
+                const self = confirm('解毒对象：确定=自己，取消=AI');
+                if (self) { state.player.tox = Math.max(0, state.player.tox - 1); log('你对自己使用解毒 → 你 Tox -1', 'info') }
+                else { state.ai.tox = Math.max(0, state.ai.tox - 1); log('你对 AI 使用解毒 → AI Tox -1', 'info') }
+                state.usedToolThisTurn = true; render(); SFX.good(); if (!checkEnd()) { }
+                return
+            }
+        }
+
+        /* ===== Drink Resolution (step-aware, forced no chain) ===== */
+        function addToStackAndResolve(targetIdx, drinker, drawCount, step, allowChain) {
+            // 抽牌并入栈
+            const got = drawMany(drawCount); SFX.draw();
+            const s = state.slots[targetIdx];
+            s.stack.push(...got);
+            log(`${drinker === 'player' ? '你' : 'AI'} 在 #${targetIdx + 1} 抽牌：<b>[${got.join(', ') || '空'}]</b>（入栈；本口阶=${step}）`, 'info');
+            if (drinker === 'player') state.peek = null; // 窥视用一次作废
+
+            // 判定
+            const type = computeType(s);
+            if (type === 'G') {
+                if (drinker === 'player') { state.player.tox += 1 * step; log(`→ 判 <b>G</b>：你 +${1 * step} Tox（阶=${step}）；#${targetIdx + 1} 退场并公开。`, 'warn'); SFX.garlic(); }
+                else { state.ai.tox += 1 * step; log(`→ 判 <b>G</b>：AI +${1 * step} Tox（阶=${step}）；#${targetIdx + 1} 退场并公开。`, 'warn'); SFX.garlic(); }
+                s.retired = true; s.publicRevealed = [...s.stack];
+                render(); return { type, ended: true };
+            }
+            if (type === 'V') {
+                if (drinker === 'player') { state.player.tox += 1 * step; log(`→ 判 <b>V</b>：你 +${1 * step} Tox（阶=${step}）`, 'bad'); SFX.bad(); }
+                else { state.ai.tox += 1 * step; log(`→ 判 <b>V</b>：AI +${1 * step} Tox（阶=${step}）`, 'bad'); SFX.bad(); }
+                render(); return { type, ended: true };
+            }
+            // H
+            if (drinker === 'player') {
+                state.player.bp += 1 * step;
+                if (allowChain) { state.player.chain = step; log(`→ 判 <b>H</b>：你 +${1 * step} BP（连吸阶=${step}）`, 'good'); }
+                else { log(`→ 判 <b>H</b>：你 +${1 * step} BP（被指定/禁止连吸）`, 'good'); }
+            } else {
+                state.ai.bp += 1 * step;
+                if (allowChain) { state.ai.chain = step; log(`→ 判 <b>H</b>：AI +${1 * step} BP（连吸阶=${step}）`, 'good'); }
+                else { log(`→ 判 <b>H</b>：AI +${1 * step} BP（被指定/禁止连吸）`, 'good'); }
+            }
+            render();
+            return { type, ended: false };
+        }
+
+        /* ===== Player: drink / assign ===== */
+        function playerDrinkOrAssign() {
+            if (state.ended || state.turn !== 'player') return;
+            const idx = parseInt(el('mainTarget').value || '0', 10); const who = el('drinker').value;
+            if (state.slots[idx].retired) { log('该位已退场，不能选择。', 'bad'); return }
+            // 标记本回合已喝
+            state.performedDrinkThisTurn = true;
+
+            if (who === 'player') {
+                // 自饮：阶 = 你当前连吸 + 1；允许连吸
+                const step = (state.player.chain || 0) + 1;
+                const res = addToStackAndResolve(idx, 'player', 2, step, true);
+                if (res.ended) {
+                    // 爆了 → 回合结束
+                    state.player.chain = 0; endPlayerTurnCore();
+                } else {
+                    log(`你自饮为 H：可继续本回合（当前连吸阶=${state.player.chain}）。`, 'info');
+                }
+            } else {
+                // 指定 AI 饮用：你的回合立刻结束；这口用你的“下一阶”，AI 不连吸
+                const step = (state.player.chain || 0) + 1;
+                const draw = aiChooseDrawCountWhenForced(idx);
+                log(`你指定 AI 饮用 #${idx + 1}（AI 选择抽 <b>${draw}</b>；本口阶=${step}）`, 'info');
+                addToStackAndResolve(idx, 'ai', draw, step, false);
+                state.player.chain = 0; endPlayerTurnCore();
+            }
+        }
+
+        /* ===== End turn button ===== */
+        function endPlayerTurnCore() {
+            state.player.turns++; state.turn = 'ai'; state.usedToolThisTurn = false; state.performedDrinkThisTurn = false;
+            render(); if (!checkEnd()) { log('—— 轮到 AI ——', 'info'); aiTurn(); }
+        }
+        function endPlayerTurn() {
+            if (state.ended || state.turn !== 'player') return;
+            state.player.chain = 0; log('你选择结束本回合（放弃继续连吸）。', 'info');
+            endPlayerTurnCore();
+        }
+
+        /* ===== Supply (sacrifice turn; only before any drink this turn) ===== */
+        function supply(kind) {
+            if (state.ended || state.turn !== 'player') return;
+            if (state.performedDrinkThisTurn) { log('本回合已喝血，不能进行牺牲补给。', 'bad'); return; }
+
+            if (kind === 'tool') {
+                // 两次选择：Spy / Slay / Detox（不限制回合数）
+                for (let t = 0; t < 2; t++) {
+                    const pool = ['Spy', 'Slay', 'Detox']; shuffle(pool);
+                    const pick = prompt(`道具第 ${t + 1}/2 次：输入 Spy / Slay / Detox（留空=随机）`)?.trim();
+                    let got = ['Spy', 'Slay', 'Detox'].includes(pick) ? pick : pool[0];
+                    state.player.tools.push(got); log(`你补给道具：+1 ${got}`, 'info'); SFX.pick();
+                }
+            } else {
+                // 操作×2：从牌库真实抽两张入“手牌”
+                for (let t = 0; t < 2; t++) {
+                    const x = drawOne(); state.player.hand.push(x); log(`你补给操作：+1 ${x}`, 'info'); SFX.pick();
+                }
+            }
+            // 牺牲整回合
+            state.player.chain = 0; endPlayerTurnCore();
+        }
+
+        /* ===== AI ===== */
+        function aiChooseDrawCountWhenForced(idx) {
+            const s = state.slots[idx]; const c = s.stack.filter(x => x === 'C').length, a = s.stack.filter(x => x === 'A').length, diff = c - a;
+            if (diff >= 1) return 1; if (diff <= -1) return 3; return 2;
+        }
+        function aiTurn() {
+            if (state.ended || state.turn !== 'ai') return;
+            state.ai.chain = 0;
+            let aiDrankThisTurn = false;
+
+            // —— 道具阶段（保命/机会主义）——
+            if (state.settings.aiDifficulty === 'hard') {
+                if (state.ai.tools.includes('Detox') && state.ai.tox >= state.settings.toxCap - 1) {
+                    state.ai.tools.splice(state.ai.tools.indexOf('Detox'), 1); state.ai.tox = Math.max(0, state.ai.tox - 1);
+                    log('AI 使用解毒 → AI Tox -1', 'info'); SFX.good(); render(); if (checkEnd()) return;
+                }
+                if (!state.ai.leechUsed && (state.player.bp >= state.settings.bpGoal - 6 || (state.ai.bp <= state.player.bp && state.player.bp >= 8))) {
+                    state.ai.leechUsed = true; state.player.bp = Math.max(0, state.player.bp - 4); state.ai.tox += 1;
+                    log('<b>AI 发动血掠</b> → 你 -4BP；AI +1Tox', 'warn'); SFX.bad(); render(); if (checkEnd()) return;
+                }
+                if (state.ai.tools.includes('Spy') && Math.random() < 0.35) {
+                    const i = state.ai.tools.indexOf('Spy'); state.ai.tools.splice(i, 1);
+                    const top = peekTop(); log(`AI 使用窥视（DEV 可见）：顶牌=${top ?? '（空）'}`, 'info'); log(`DEV：AI peek = ${top}`, 'dev', true);
+                }
+            } else {
+                if (state.ai.tools.includes('Detox') && state.ai.tox >= state.settings.toxCap - 1) {
+                    state.ai.tools.splice(state.ai.tools.indexOf('Detox'), 1); state.ai.tox = Math.max(0, state.ai.tox - 1);
+                    log('AI 使用解毒 → AI Tox -1', 'info'); SFX.good(); render(); if (checkEnd()) return;
+                }
+            }
+
+            // —— 决策：若未喝前，AI 也可能牺牲回合补给（少量概率）——
+            if (Math.random() < 0.08) {
+                // 随机选择补什么
+                if (Math.random() < 0.5) {
+                    for (let k = 0; k < 2; k++) { const x = drawOne(); state.ai.hand.push(x); log(`AI 牺牲回合：补给操作 +1 ${x}`, 'info') }
+                } else {
+                    for (let k = 0; k < 2; k++) { const pool = ['Spy', 'Slay', 'Detox']; shuffle(pool); state.ai.tools.push(pool[0]); log('AI 牺牲回合：补给道具 +1', 'info') }
+                }
+                state.ai.turns++; state.turn = 'player'; render(); if (!checkEnd()) { log('—— 轮到你 ——', 'info') } return;
+            }
+
+            // —— 主行动：评估每个未退场位 ——
+            const candIdx = state.slots.map((s, i) => !s.retired ? i : -1).filter(i => i >= 0);
+            let bestSelf = null, bestSelfScore = -1e9;
+            let bestPush = null, bestPushScore = -1e9;
+            candIdx.forEach(i => {
+                const s = state.slots[i]; const cur = computeType(s);
+                const selfScore = (cur === 'H' ? +2 : cur === 'V' ? -2 * (1 + state.ai.tox / state.settings.toxCap) : -1.5);
+                if (selfScore > bestSelfScore) { bestSelfScore = selfScore; bestSelf = i }
+                const pushScore = (cur === 'V' ? +2 * (1 + state.player.tox / state.settings.toxCap) : cur === 'G' ? +1.2 : -1.0);
+                if (pushScore > bestPushScore) { bestPushScore = pushScore; bestPush = i }
+            });
+
+            // 偶尔对退场位用杀戮掠夺
+            const retiredIdx = state.slots.map((s, i) => s.retired ? i : -1).filter(i => i >= 0);
+            if (state.ai.tools.includes('Slay') && retiredIdx.length && Math.random() < 0.5) {
+                const i = state.ai.tools.indexOf('Slay'); state.ai.tools.splice(i, 1);
+                const pick = rnd(retiredIdx); const loot = [...state.slots[pick].stack]; state.ai.hand.push(...loot);
+                log(`AI 对退场位 #${pick + 1} 使用杀戮（掠夺入手）`, 'warn'); SFX.slay(); state.slots[pick] = { stack: [], retired: false, publicRevealed: [] };
+                state.ai.turns++; state.turn = 'player'; render(); if (!checkEnd()) { log('—— 轮到你 ——', 'info') } return;
+            }
+
+            // 决定自饮 or 推你喝
+            const preferSelf = bestSelfScore >= bestPushScore - 0.3;
+            if (preferSelf && bestSelf != null) {
+                const idx = bestSelf;
+                // 自饮：每口阶 = AI.chain + 1；H 可连吸；V/G 结束
+                do {
+                    const step = (state.ai.chain || 0) + 1;
+                    const res = addToStackAndResolve(idx, 'ai', 2, step, true);
+                    aiDrankThisTurn = true;
+                    if (res.ended) { state.ai.chain = 0; break; }
+                    const risk = state.ai.tox / state.settings.toxCap;
+                    const goOn = (state.ai.chain < 3) && (risk < 0.5) && Math.random() < 0.65;
+                    if (!goOn) break;
+                } while (true);
+                state.ai.turns++; state.turn = 'player'; render(); if (!checkEnd()) { log('—— 轮到你 ——', 'info') } return;
+            } else if (bestPush != null) {
+                const idx = bestPush;
+                const step = (state.ai.chain || 0) + 1;
+                log(`AI 指定你饮用 #${idx + 1}（你可选抽 1/2/3；本口阶=${step}）`, 'info');
+                showChooseDrawModal((n) => {
+                    addToStackAndResolve(idx, 'player', n, step, false);
+                    state.ai.chain = 0; state.ai.turns++; state.turn = 'player';
+                    render(); if (!checkEnd()) { log('—— 轮到你 ——', 'info') }
+                });
+                return;
+            }
+
+            // fallback：结束
+            state.ai.turns++; state.turn = 'player'; render(); if (!checkEnd()) { log('—— 轮到你 ——', 'info') }
+        }
+
+        /* ===== Modal: choose draw count when forced ===== */
+        function showChooseDrawModal(cb) {
+            const m = el('chooseDrawModal'); const s = el('chooseDrawSel'); m.style.display = 'flex';
+            el('chooseDrawOK').onclick = () => { try { ensureAC() } catch (e) { } SFX.click(); const n = parseInt(s.value, 10); m.style.display = 'none'; cb(n) }
+        }
+
+        /* ===== Small helpers ===== */
+        function rnd(a) { return a[(Math.random() * a.length) | 0] }
+
+        /* ===== Wiring ===== */
+        ['applySettings', 'resetSettings', 'restart', 'playTool', 'doDrink', 'supplyOp', 'supplyTool', 'endTurn'].forEach(id => {
+            el(id).addEventListener('click', () => { try { ensureAC() } catch (e) { } SFX.click() })
+        });
+        el('applySettings').onclick = () => {
+            state.settings.dev = el('devToggle').checked;
+            state.settings.aiDifficulty = el('aiDiff').value;
+            state.settings.bpGoal = Math.max(1, parseInt(el('bpGoalInput').value || '50', 10));
+            state.settings.toxCap = Math.max(1, parseInt(el('toxCapInput').value || '15', 10));
+            state.settings.deckCounts = {
+                N: Math.max(0, parseInt(el('deckN').value || '40', 10)),
+                C: Math.max(0, parseInt(el('deckC').value || '36', 10)),
+                A: Math.max(0, parseInt(el('deckA').value || '34', 10)),
+                G: Math.max(0, parseInt(el('deckG').value || '10', 10))
+            };
+            save(); log('设置已应用并保存。', 'info'); buildDeck(); render();
+        };
+        el('resetSettings').onclick = () => { state.settings = defaults(); save(); buildDeck(); render(); log('设置已恢复默认。', 'info') };
+        el('restart').onclick = () => { resetBoard(6) };
+        el('playTool').onclick = useTool;
+        el('doDrink').onclick = playerDrinkOrAssign;
+        el('supplyOp').onclick = () => supply('op');
+        el('supplyTool').onclick = () => supply('tool');
+        el('endTurn').onclick = endPlayerTurn;
+        el('devToggle').addEventListener('change', () => { state.settings.dev = el('devToggle').checked; save(); render() });
+
+        /* ===== Init ===== */
+        resetBoard(6);
+    </script>
+    <script>
+        // 计算村民血液类型（V/G/H）
+        function computeType(slot) {
+            if (slot.stack.includes('G')) return 'G';  // 如果栈中有G血，判定为G血
+            const c = slot.stack.filter(x => x === 'C').length;
+            const a = slot.stack.filter(x => x === 'A').length;
+            return (c - a >= 2) ? 'V' : 'H';  // C-A >= 2 为V，否则为H血
+        }
+
+        // 检查是否所有村民都为V或G，如果是，补充一个新白板村民
+        function checkForWhiteboardVillager() {
+            const allVillagersRetiredOrV_G = state.slots.every(slot => {
+                const type = computeType(slot);
+                return type === 'V' || type === 'G';  // 如果全部村民都是V或G血
+            });
+
+            if (allVillagersRetiredOrV_G) {
+                // 如果是，补充一个新的白板村民
+                log("所有村民已被判定为V或G血，补充一个新鲜白板村民", 'info');
+                addNewVillager();
+            }
+        }
+
+        // 添加一个新白板村民（血液为H）
+        function addNewVillager() {
+            const newVillager = {
+                stack: ['H'],  // 设置新村民的血液类型为H
+                retired: false,
+                publicRevealed: []
+            };
+
+            // 将新的村民加入到slots中
+            state.slots.push(newVillager);
+            render();  // 重新渲染界面
+        }
+
+        // 重置村民和游戏状态
+        function resetBoard(villagerCount = 6) {
+            state.player = { bp: 0, tox: 0, hand: [], tools: [], chain: 0, leechUsed: false, turns: 0 };
+            state.ai = Array.from({ length: 1 }).map(() => ({ bp: 0, tox: 0, hand: [], tools: [], chain: 0, leechUsed: false, turns: 0 }));
+            state.slots = Array.from({ length: villagerCount }, () => ({ stack: ['H'], retired: false, publicRevealed: [] }));
+            state.turn = 'player'; state.usedToolThisTurn = false; state.ended = false; state.peek = null; state.performedDrinkThisTurn = false;
+            buildDeck(); log(`<b>对局开始</b>：目标 ${state.settings.bpGoal} BP；Tox 上限 ${state.settings.toxCap}；抽牌喝血，明牌卡栈。`, 'info');
+            render();
+        }
+
+        // 调用检查函数：每回合或每次操作后调用
+        function endPlayerTurnCore() {
+            checkForWhiteboardVillager(); // 检查是否需要补充新村民
+            state.player.turns++; state.turn = 'ai'; state.usedToolThisTurn = false; state.performedDrinkThisTurn = false;
+            render(); if (!checkEnd()) { log('—— 轮到 AI ——', 'info'); aiTurn(); }
+        }
+
+        // 重新开始游戏
+        el('restart').onclick = () => { resetBoard(6); };
+
+        // 渲染更新UI
+        function render() {
+            // 更新界面，显示当前玩家和AI的状态
+            el('pBP').textContent = state.player.bp; el('aBP').textContent = state.ai.bp;
+            el('pTox').textContent = state.player.tox; el('aTox').textContent = state.ai.tox;
+            el('bpGoal').textContent = state.settings.bpGoal; el('bpGoal2').textContent = state.settings.bpGoal;
+            el('toxCap').textContent = state.settings.toxCap; el('toxCap2').textContent = state.settings.toxCap;
+            el('pBPbar').style.width = Math.min(100, Math.round(100 * state.player.bp / state.settings.bpGoal)) + '%';
+            el('aBPbar').style.width = Math.min(100, Math.round(100 * state.ai.bp / state.settings.bpGoal)) + '%';
+            el('pToxbar').style.width = Math.min(100, Math.round(100 * state.player.tox / state.settings.toxCap)) + '%';
+            el('aToxbar').style.width = Math.min(100, Math.round(100 * state.ai.tox / state.settings.toxCap)) + '%';
+            el('pChain').textContent = state.player.chain; el('aChain').textContent = state.ai.chain;
+
+            // 更新村民显示
+            const wrap = el('villagers'); wrap.innerHTML = '';
+            state.slots.forEach((s, i) => {
+                const d = document.createElement('div'); d.className = 'slot';
+                const t = document.createElement('div'); t.className = 'title'; t.textContent = `#${i + 1}`; d.appendChild(t);
+                const tags = document.createElement('div'); tags.className = 'tags';
+                const ct = document.createElement('span'); ct.className = 'tag'; ct.textContent = `栈深:${s.stack.length}`; tags.appendChild(ct);
+                if (s.retired) { const r = document.createElement('span'); r.className = 'tag retired'; r.textContent = '退场'; tags.appendChild(r) }
+                if (s.stack.includes('G')) { const g = document.createElement('span'); g.className = 'tag garlic'; g.textContent = '含G'; tags.appendChild(g) }
+                d.appendChild(tags);
+
+                const list = document.createElement('div'); list.className = 'muted'; list.textContent = `栈：[${s.stack.join(', ') || '空'}]`;
+                d.appendChild(list);
+                const type = computeType(s); const line = document.createElement('div'); line.className = 'muted'; line.textContent = `当前判定：${type}`;
+                d.appendChild(line);
+                if (state.settings.dev && !s.retired) {
+                    const dev = document.createElement('div'); dev.className = 'devline'; dev.textContent = `DEV: type=${type} stack=[${s.stack.join(', ')}]`;
+                    d.appendChild(dev)
+                }
+                wrap.appendChild(d)
+            });
+        }
+    </script>
+
+
+</body>
+</html>
